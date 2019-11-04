@@ -107,12 +107,12 @@ void ACollider::CameraYaw(float value) {
 void ACollider::MoveRight(float value)
 {
 	FVector Right = GetActorRightVector();
-	AddMovementInput(value * Right);
+	//AddMovementInput(value * Right);
 	
 	if (GetMovementComponent())
-	//{
+	{
 		OurMovementComponent->AddInputVector(value * Right);
-	//}
+	}
 
 	
 }
