@@ -33,6 +33,8 @@ public:
 
 
 
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -56,6 +58,8 @@ public:
 
 	// Called input to look up/down at a given rate, 1.0 represents the 100% rate
 	void LookUpRate(float value);
+
+
 
 	FORCEINLINE USpringArmComponent* GetCameraArm() const { return CameraArm; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }

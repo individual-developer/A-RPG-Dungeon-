@@ -19,7 +19,7 @@ AMainCharacter::AMainCharacter()
 	//Pull toward the player if collision occur
 	CameraArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraArm"));
 	CameraArm->SetupAttachment(GetRootComponent());
-	CameraArm->TargetArmLength = 600.f; // Camera follow this distance
+	CameraArm->TargetArmLength = 300.f; // Camera follow this distance
 	CameraArm->bUsePawnControlRotation = true; // Rotate is based on the controller
 
 	//Set size for collision of Capsule
@@ -44,7 +44,7 @@ AMainCharacter::AMainCharacter()
 	//Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // character move in the direction of input
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);//...add this rotation rate
-	GetCharacterMovement()->JumpZVelocity = 650.f;
+	GetCharacterMovement()->JumpZVelocity = 330.f;
 	GetCharacterMovement()->AirControl = 0.2f;
 }
 
@@ -76,6 +76,7 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	//PlayerInputComponent->BindAction("SwordSwing", IE_Pressed, this, &ACharacter);
 
 
 }

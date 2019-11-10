@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
+#include"MainCharacter.h"
 #include "MainAnimInstance.generated.h"
+
 
 /**
  * 
@@ -27,6 +29,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
 	class APawn* Pawn;
+
+	AMainCharacter* GetMainCharacter()const;
+	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	bool bIsSwing;
 
 
 

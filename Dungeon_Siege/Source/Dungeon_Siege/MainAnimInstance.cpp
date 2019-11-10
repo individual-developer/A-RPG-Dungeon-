@@ -3,6 +3,9 @@
 
 #include "MainAnimInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
+//#include "GameFramework/Pawn.h"
+//#include "GameFramework/Controller.h"
+//#include "Kismet/GameplayStatics.h"
 
 void UMainAnimInstance::NativeInitializeAnimation()
 {
@@ -25,6 +28,16 @@ void UMainAnimInstance::UpdateAnimationProperties()
 		MovementSpeed = LateralSpeed.Size();
 
 		bIsInAir = Pawn->GetMovementComponent()->IsFalling();
+		//bIsInAir = !(Pawn->GetMovementComponent()->IsMovingOnGround());
+		//bIsSwing = GetMainCharacter()->
 	}
 }
+
+AMainCharacter* UMainAnimInstance::GetMainCharacter() const
+{
+	return Cast<AMainCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
+}
+
+
+
 
