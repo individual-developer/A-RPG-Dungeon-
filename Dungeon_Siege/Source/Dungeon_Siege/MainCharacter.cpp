@@ -46,6 +46,32 @@ AMainCharacter::AMainCharacter()
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 540.f, 0.f);//...add this rotation rate
 	GetCharacterMovement()->JumpZVelocity = 330.f;
 	GetCharacterMovement()->AirControl = 0.2f;
+
+	MaxHealth = 5.f;
+	Health = 2.5f;
+	MaxMagic = 1.f;
+	Magic = 0.5f;
+	Coins = 0;
+}
+
+void AMainCharacter::DecrementHealth(float amout)
+{
+	if (Health - amout <= 0.f) {
+		Health -= amout;
+		Die();
+	}
+	else
+		Health -= amout;
+}
+
+void AMainCharacter::IncrementCoinsCount(int amount)
+{
+	Coins += amount;
+}
+
+void AMainCharacter::Die()
+{
+
 }
 
 // Called when the game starts or when spawned

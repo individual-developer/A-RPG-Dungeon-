@@ -5,7 +5,7 @@
 
 AExplosive::AExplosive()
 {
-
+	Damage = 0.5f;
 }
 
 AMainCharacter* AExplosive::GetCharacter() const
@@ -18,6 +18,12 @@ void AExplosive::BeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* Oth
 	auto ControlledCharacter = GetCharacter();
 	Super::BeginOverlap(OverlapComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	UE_LOG(LogTemp, Warning, TEXT("AExplosive::BeginOverlap with %s"), *ControlledCharacter->GetName()) 
+	if (OtherActor) {
+		AMainCharacter* Main = Cast<AMainCharacter>(OtherActor);
+		if (Main) {
+			Main->DecrementHealth(Damage);
+		}
+	}
 }
 
 void AExplosive::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)

@@ -6,7 +6,7 @@
 
 APickUp::APickUp()
 {
-
+	CoinCount = 1;
 }
 
 AMainCharacter* APickUp::GetCharacter() const
@@ -19,6 +19,12 @@ void APickUp::BeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherA
 	auto ControlledCharacter = GetCharacter();
 	Super::BeginOverlap(OverlapComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	UE_LOG(LogTemp, Warning, TEXT("APickUp::BeginOverlap with %s"), *ControlledCharacter->GetName());
+	if (OtherActor) {
+		AMainCharacter* Main = Cast<AMainCharacter>(OtherActor);
+		if (Main) {
+			Main->IncrementCoinsCount(CoinCount);
+		}
+	}
 }
 
 void APickUp::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)

@@ -30,10 +30,28 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	float BaseLookUpRate;
 
+	/************************************************************************/
+	/* Player Stats                                                                     */
+	/************************************************************************/
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Stats")
+	float MaxHealth;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Stats")
+	float Health;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Player Stats")
+	float MaxMagic;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Stats")
+	float Magic;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Stats")
+	int32 Coins;
+
+	void DecrementHealth(float amout);
+	void IncrementCoinsCount(int amount);
+	void Die();
 
 protected:
 	// Called when the game starts or when spawned
