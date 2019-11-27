@@ -46,7 +46,7 @@ void AItem::Tick(float DeltaTime)
 
 void AItem::BeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AItem::BeginOverLap"));
+	//UE_LOG(LogTemp, Warning, TEXT("AItem::BeginOverLap"));
 	if (OverlapParticle) {
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), OverlapParticle,GetActorLocation(), FRotator(0.f), true);
 	}
@@ -54,12 +54,12 @@ void AItem::BeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherAct
 	{
 		UGameplayStatics::PlaySound2D(this, OverlapSound);
 	}
-	Destroy();
+	
 
 }
 
 void AItem::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Warning, TEXT("AItem::EndOverLap"));
+	//UE_LOG(LogTemp, Warning, TEXT("AItem::EndOverLap"));
 }
 
