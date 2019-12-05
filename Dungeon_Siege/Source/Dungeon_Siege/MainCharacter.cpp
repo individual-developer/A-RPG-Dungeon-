@@ -10,11 +10,15 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Engine/World.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 #include "Weapon.h"
+#include "Enemy.h"
 #include "AttackWeapon.h"
 #include "DefenseWeapon.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Animation/AnimInstance.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 AMainCharacter::AMainCharacter()
@@ -72,6 +76,9 @@ AMainCharacter::AMainCharacter()
 
 	bJumpKey = false;
 
+	InterpSpeed = 15.f;
+	bInterpToEnemy = false;
+
 }
 
 void AMainCharacter::ShowPickupLocations()
@@ -81,6 +88,18 @@ void AMainCharacter::ShowPickupLocations()
 			PickupLocations[i], 25.f, 8, FLinearColor::Green, 10.f, 0.5f);
 	}
 	
+}
+
+void AMainCharacter::SetInterpToEnemy(bool Interp)
+{
+	bInterpToEnemy = Interp;
+}
+
+FRotator AMainCharacter::GetLookAtRotationYaw(FVector Target)
+{
+	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target);
+	FRotator LookAtRotationYaw(0.f, LookAtRotation.Yaw, 0.f);
+	return LookAtRotationYaw;
 }
 
 void AMainCharacter::SetMovementStatus(EMovementStatus status)
@@ -149,6 +168,11 @@ void AMainCharacter::Tick(float DeltaTime)
 			;
 
 	}
+	if (bInterpToEnemy && CombatTarget) {
+		FRotator LookAtYaw = GetLookAtRotationYaw(CombatTarget->GetActorLocation());
+		FRotator InterpRotation = FMath::RInterpTo(GetActorRotation(), LookAtYaw, DeltaTime, InterpSpeed);
+		SetActorRotation(InterpRotation);
+	}
 
 }
 
@@ -164,10 +188,10 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAxis("TurnRate", this, &AMainCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AMainCharacter::LookUpRate);
 
-	//PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	//PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMainCharacter::PressedJump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AMainCharacter::ReleaseJump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	//PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMainCharacter::PressedJump);
+	//PlayerInputComponent->BindAction("Jump", IE_Released, this, &AMainCharacter::ReleaseJump);
 
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMainCharacter::ShiftKeyDown);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AMainCharacter::ShiftKeyUp);
@@ -247,12 +271,12 @@ void AMainCharacter::LMBDown()
 
 			else if (DefenseWeapon) {
 				DefenseWeapon->Equip(this);
-				//SetActiveOverlappingItem(nullptr);
+				SetActiveOverlappingItem(nullptr);
 			}
 
 		}
 
-		else if (EquippedWeapon)
+		else if (RightEquippedWeapon)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("weapon is equipped"));
 			Attack();
@@ -272,6 +296,10 @@ void AMainCharacter::SetEquipped(AItem* WeaponToSet)
 {
 	//if (EquippedWeapon)
 		//EquippedWeapon->Destroy();
+	if (AAttackWeapon* AttackWeapon = Cast<AAttackWeapon>(WeaponToSet))
+		RightEquippedWeapon = WeaponToSet;
+	else
+		LeftEquippedWeapon = WeaponToSet;
 	EquippedWeapon = WeaponToSet;
 }
 
@@ -281,6 +309,7 @@ void AMainCharacter::Attack()
 	if (!bAttacking)
 	{
 		bAttacking = true;
+		SetInterpToEnemy(true);
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance && CombatMontage)
 		{
@@ -306,15 +335,30 @@ void AMainCharacter::Attack()
 
 		}
 	}
+
+	
+
+	
 }
 
 void AMainCharacter::AttackEnd()
 {
 	bAttacking = false;
+	SetInterpToEnemy(false);
 	if (bLMBDown) {
 		Attack();
 	}
 
+}
+
+void AMainCharacter::PlaySwingSound()
+{
+	AAttackWeapon* attackWeapon = Cast<AAttackWeapon>(RightEquippedWeapon);
+	if (attackWeapon) {
+		if (attackWeapon->SwingSound) {
+			UGameplayStatics::PlaySound2D(this, attackWeapon->SwingSound);
+		}
+	}
 }
 
 void AMainCharacter::ShiftKeyDown()

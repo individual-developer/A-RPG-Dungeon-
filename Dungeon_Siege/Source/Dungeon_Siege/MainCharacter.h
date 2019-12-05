@@ -35,8 +35,20 @@ public:
 
 	TArray<FVector> PickupLocations;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class UParticleSystem* HitParticle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class USoundCue* HitSound;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Items)
 	class AItem* EquippedWeapon; // change code
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Items)
+	class AItem* LeftEquippedWeapon; // change code
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Items)
+	class AItem* RightEquippedWeapon; // change code
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items)
@@ -58,6 +70,17 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Movement)
 	float MinSprintStamina;
+
+	float InterpSpeed;
+	bool bInterpToEnemy;
+	void SetInterpToEnemy(bool Interp);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat)
+	class AEnemy* CombatTarget;
+
+	FORCEINLINE void SetCombatTarget(AEnemy* target) { CombatTarget = target; }
+
+	FRotator GetLookAtRotationYaw(FVector Target);
 
 	/**Set movement status and running speed*/
 	void SetMovementStatus(EMovementStatus status);
@@ -171,4 +194,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Anims)
 	class UAnimMontage* CombatMontage;
+
+	UFUNCTION(BlueprintCallable)
+	void PlaySwingSound();
+
 };

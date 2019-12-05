@@ -7,13 +7,12 @@
 #include "Enemy.generated.h"
 
 UENUM(BlueprintType)
-enum class EEnemyMovementStatus : uint8
+enum class EEnemyMovementStatus :uint8
 {
-	EMS_Idle			UMETA(DisplayName = "Idle"),
-	EMS_MoveToTarget	UMETA(DisplayName = "MoveToTarget"),
-	EMS_Attacking		UMETA(DisplayName = "Attacking"),
-
-	EMS_MAX				UMETA(DIsplayName = "DefaultMAX")
+	Idle			UMETA(DisplayName = "Idle"),
+	MoveToTarget	UMETA(DisplayName = "MoveToTarget"),
+	Attacking		UMETA(DisplayName = "Attacking"),
+	//MAX				UMETA(DIsplayName = "DefaultMAX")
 };
 
 UCLASS()
@@ -70,4 +69,47 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AI)
 	AMainCharacter* CombatTarget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+	float Health;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+	float MAXHealth;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+	float Damage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	class UParticleSystem* HitParticle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	class USoundCue* HitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	USoundCue* SwingSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class UBoxComponent* CombatCollision;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class UAnimMontage* CombatMontage;
+
+	UFUNCTION()
+	void CombatBeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	UFUNCTION()
+	void CombatEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateCollision();
+
+	UFUNCTION(BlueprintCallable)
+	void DeactivateCollision();
+
+	UFUNCTION(BlueprintCallable)
+	void AttackEnd();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bAttacking;
+
+	void Attack();
 };
