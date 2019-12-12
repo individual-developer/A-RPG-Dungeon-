@@ -19,6 +19,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Animation/AnimInstance.h"
 #include "Sound/SoundCue.h"
+#include "MainPlayerController.h"
 
 // Sets default values
 AMainCharacter::AMainCharacter()
@@ -58,7 +59,7 @@ AMainCharacter::AMainCharacter()
 	GetCharacterMovement()->AirControl = 0.2f;
 
 	MaxHealth = 5.f;
-	Health = 2.5f;
+	Health = 4.f;
 	MaxStamina = 1.f;
 	Stamina = 0.5f;
 	Coins = 0;
@@ -78,6 +79,7 @@ AMainCharacter::AMainCharacter()
 
 	InterpSpeed = 15.f;
 	bInterpToEnemy = false;
+	bHasCombatTarget = false;
 
 }
 
@@ -124,6 +126,13 @@ void AMainCharacter::DecrementHealth(float amout)
 		Health -= amout;
 }
 
+float AMainCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	DecrementHealth(Damage);
+
+	return Damage;
+}
+
 void AMainCharacter::IncrementCoinsCount(int amount)
 {
 	Coins += amount;
@@ -131,13 +140,19 @@ void AMainCharacter::IncrementCoinsCount(int amount)
 
 void AMainCharacter::Die()
 {
-
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && CombatMontage) {
+		AnimInstance->Montage_Play(CombatMontage, 1.f);
+		AnimInstance->Montage_JumpToSection(FName("Death"), CombatMontage);
+	}
 }
 
 // Called when the game starts or when spawned
 void AMainCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	MainPlayerController = Cast<AMainPlayerController>(GetController());
+	
 	
 }
 
@@ -172,6 +187,13 @@ void AMainCharacter::Tick(float DeltaTime)
 		FRotator LookAtYaw = GetLookAtRotationYaw(CombatTarget->GetActorLocation());
 		FRotator InterpRotation = FMath::RInterpTo(GetActorRotation(), LookAtYaw, DeltaTime, InterpSpeed);
 		SetActorRotation(InterpRotation);
+	}
+	if (CombatTargetForHealthbar)
+	{
+		CombatTargetLocation = CombatTargetForHealthbar->GetActorLocation();
+		if (MainPlayerController) {
+			MainPlayerController->EnemyLocation = CombatTargetLocation;
+		}
 	}
 
 }

@@ -33,6 +33,17 @@ public:
 	// Sets default values for this character's properties
 	AMainCharacter();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bHasCombatTarget;
+
+	FORCEINLINE void SetHasCombatTarget(bool HasCombatTarget) { bHasCombatTarget = HasCombatTarget; }
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Controller")
+	class AMainPlayerController* MainPlayerController;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	FVector CombatTargetLocation;
+
 	TArray<FVector> PickupLocations;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
@@ -77,8 +88,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat)
 	class AEnemy* CombatTarget;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat)
+	class AEnemy* CombatTargetForHealthbar;
 	FORCEINLINE void SetCombatTarget(AEnemy* target) { CombatTarget = target; }
+	FORCEINLINE void SetCombatTarget_(AEnemy* target) { CombatTargetForHealthbar = target; }
 
 	FRotator GetLookAtRotationYaw(FVector Target);
 
@@ -137,6 +150,9 @@ public:
 	int32 Coins;
 
 	void DecrementHealth(float amout);
+
+	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)override;
+
 	void IncrementCoinsCount(int amount);
 	void Die();
 

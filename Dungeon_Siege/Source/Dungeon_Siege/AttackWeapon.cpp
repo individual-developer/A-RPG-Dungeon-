@@ -78,6 +78,9 @@ void AAttackWeapon::CombatBeginOverlap(UPrimitiveComponent* OverlapComponent, AA
 				UGameplayStatics::PlaySound2D(this, Enemy->HitSound);
 			}
 
+			if (DamageTypeClass) {
+				UGameplayStatics::ApplyDamage(Enemy, Damage, WeaponInstigator, this, DamageTypeClass);
+			}
 		}
 	}
 }
@@ -99,27 +102,31 @@ void AAttackWeapon::DeactivateCollision()
 
 void AAttackWeapon::Equip(AMainCharacter* character)
 {
-	StaticMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-	StaticMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-	StaticMesh->SetSimulatePhysics(false);
-	//SkeletalMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-	//SkeletalMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-	//SkeletalMesh->SetSimulatePhysics(false);
+	if (character)
+	{
+		SetInstigator(character->GetController());
+		StaticMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+		StaticMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+		StaticMesh->SetSimulatePhysics(false);
+		//SkeletalMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+		//SkeletalMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+		//SkeletalMesh->SetSimulatePhysics(false);
 
 
-	const USkeletalMeshSocket* RightHandSocket = character->GetMesh()->GetSocketByName("Sword_hold");
-	if (RightHandSocket) {
-		RightHandSocket->AttachActor(this, character->GetMesh());
-		bRotate = false;
-		character->SetEquipped(this);
-		character->SetActiveOverlappingItem(nullptr);
+		const USkeletalMeshSocket* RightHandSocket = character->GetMesh()->GetSocketByName("Sword_hold");
+		if (RightHandSocket) {
+			RightHandSocket->AttachActor(this, character->GetMesh());
+			bRotate = false;
+			character->SetEquipped(this);
+			character->SetActiveOverlappingItem(nullptr);
+		}
+
+		if (OnEquippedSound)
+			UGameplayStatics::PlaySound2D(this, OnEquippedSound);
+
+		if (!bWeaponParticle)
+			ParticleComponent->Deactivate();
 	}
-
-	if (OnEquippedSound)
-		UGameplayStatics::PlaySound2D(this, OnEquippedSound);
-
-	if (!bWeaponParticle)
-		ParticleComponent->Deactivate();
 }
 
 void AAttackWeapon::BeginPlay()

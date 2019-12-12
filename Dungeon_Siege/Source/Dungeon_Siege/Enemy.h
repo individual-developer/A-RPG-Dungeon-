@@ -12,6 +12,7 @@ enum class EEnemyMovementStatus :uint8
 	Idle			UMETA(DisplayName = "Idle"),
 	MoveToTarget	UMETA(DisplayName = "MoveToTarget"),
 	Attacking		UMETA(DisplayName = "Attacking"),
+	Dead            UMETA(DisplayName = "Dead")
 	//MAX				UMETA(DIsplayName = "DefaultMAX")
 };
 
@@ -94,6 +95,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	class UAnimMontage* CombatMontage;
 
+	FTimerHandle AttackTimer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float AttackMinTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float AttackMaxTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<class UDamageType> DamageTypeClass;
+
+	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)override;
+
 	UFUNCTION()
 	void CombatBeginOverlap(UPrimitiveComponent* OverlapComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	UFUNCTION()
@@ -112,4 +124,17 @@ public:
 	bool bAttacking;
 
 	void Attack();
+
+	UFUNCTION(BlueprintCallable)
+	void DeathEnd();
+
+	bool Alive();
+
+	void Die();
+	FTimerHandle DeathDelayTimer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float DelayTime;
+
+	void Disappear();
 };

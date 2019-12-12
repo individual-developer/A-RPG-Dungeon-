@@ -10,6 +10,7 @@ Using Unreal Engine 4 to create A-RPG Game with each game play feature fully com
 * 07 Setup AI mechanics by using pathfinding algorithm, as well as HUD setup, weapon pickup. 
 * 08 Setup combat mechanics between enemy and character. 
 * 09 Refine the combat, including the audio when character and enemy launching attacking, taking the damage. 
+* 10 Add death animation of enemy, HUD showing the enemy status, including the health value.
 
 
 
