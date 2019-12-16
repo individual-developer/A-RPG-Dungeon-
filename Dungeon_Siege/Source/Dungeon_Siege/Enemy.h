@@ -68,6 +68,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AI)
 	bool bOverlappingCombatSphere;
 
+	bool bHasVaildTarget;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AI)
 	AMainCharacter* CombatTarget;
 
@@ -131,6 +133,7 @@ public:
 	bool Alive();
 
 	void Die();
+	void Die(AActor* DamageCauser);
 	FTimerHandle DeathDelayTimer;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")

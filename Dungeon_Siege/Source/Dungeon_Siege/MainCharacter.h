@@ -9,9 +9,10 @@
 UENUM(BlueprintType)
 enum class EMovementStatus :uint8
 {
-	EMS_Normal UMETA(DisplayName="Normal"),
-	EMS_Sprinting UMETA(DisplayName="Sprinting"),
-	EMS_MAX UMETA(DisplayName = "DefaultMAX")
+	EMS_Normal      UMETA(DisplayName="Normal"),
+	EMS_Sprinting   UMETA(DisplayName="Sprinting"),
+	EMS_Dead		UMETA(DisplayName = "Dead"),
+	EMS_MAX         UMETA(DisplayName = "DefaultMAX")
 };
 
 UENUM(BlueprintType)
@@ -45,7 +46,7 @@ public:
 	FVector CombatTargetLocation;
 
 	TArray<FVector> PickupLocations;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	class UParticleSystem* HitParticle;
 
@@ -61,7 +62,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Items)
 	class AItem* RightEquippedWeapon; // change code
 
-
+	virtual void Jump()override;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items)
 	class AItem* ActiveOverlappingItem;
 
@@ -153,7 +154,12 @@ public:
 
 	virtual float TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)override;
 
+	UFUNCTION(BlueprintCallable)
 	void IncrementCoinsCount(int amount);
+
+	UFUNCTION(BlueprintCallable)
+	void IncrementHealth(float amount);
+
 	void Die();
 
 protected:
@@ -173,7 +179,12 @@ public:
 
 	//Call for the move side by side input
 	void MoveRight(float value);
-	
+	bool bMovingForward;
+	bool bMovingRight;
+
+	//Check whether character is moving before sprinting 
+	FORCEINLINE bool IsMoving() { return bMovingForward || bMovingRight; }
+
 	// Called input to turn at a given rate
 	void TurnAtRate(float value);
 
@@ -213,5 +224,15 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void PlaySwingSound();
+
+	UFUNCTION(BlueprintCallable)
+	void DeathEnd();
+
+	bool Alive();
+
+	void UpdateCombatTarget();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<AEnemy>EnemyFilter;
 
 };

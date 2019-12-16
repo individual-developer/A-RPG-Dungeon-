@@ -20,6 +20,8 @@
 #include "Animation/AnimInstance.h"
 #include "Sound/SoundCue.h"
 #include "MainPlayerController.h"
+#include "AIController.h"
+
 
 // Sets default values
 AMainCharacter::AMainCharacter()
@@ -80,7 +82,15 @@ AMainCharacter::AMainCharacter()
 	InterpSpeed = 15.f;
 	bInterpToEnemy = false;
 	bHasCombatTarget = false;
+	bMovingForward = false;
+	bMovingRight = false;
+}
 
+void AMainCharacter::Jump()
+{
+	if (Alive()) {
+		Super::Jump();
+	}
 }
 
 void AMainCharacter::ShowPickupLocations()
@@ -128,7 +138,21 @@ void AMainCharacter::DecrementHealth(float amout)
 
 float AMainCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
-	DecrementHealth(Damage);
+	//DecrementHealth(Damage);
+	if (Health - Damage <= 0.f) {
+		Health -= Damage;
+		Die();
+		if (DamageCauser) {
+			AEnemy* enemy = Cast<AEnemy>(DamageCauser);
+			if(enemy)
+			{
+				enemy->bHasVaildTarget = false;
+			}
+		}
+		
+	}
+	else
+		Health -= Damage;
 
 	return Damage;
 }
@@ -138,6 +162,14 @@ void AMainCharacter::IncrementCoinsCount(int amount)
 	Coins += amount;
 }
 
+void AMainCharacter::IncrementHealth(float amount)
+{
+	if (Health + amount >= MaxHealth)
+		Health = MaxHealth;
+	else
+		Health += amount;
+}
+
 void AMainCharacter::Die()
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
@@ -145,6 +177,7 @@ void AMainCharacter::Die()
 		AnimInstance->Montage_Play(CombatMontage, 1.f);
 		AnimInstance->Montage_JumpToSection(FName("Death"), CombatMontage);
 	}
+	SetMovementStatus(EMovementStatus::EMS_Dead);
 }
 
 // Called when the game starts or when spawned
@@ -160,7 +193,10 @@ void AMainCharacter::BeginPlay()
 void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!Alive()) return;
 	float DeltaStamina = StaminaDrainRate * DeltaTime;
+
 	switch (StaminaStatus)
 	{
 		case EStaminaStatus::ESS_Normal:
@@ -188,9 +224,9 @@ void AMainCharacter::Tick(float DeltaTime)
 		FRotator InterpRotation = FMath::RInterpTo(GetActorRotation(), LookAtYaw, DeltaTime, InterpSpeed);
 		SetActorRotation(InterpRotation);
 	}
-	if (CombatTargetForHealthbar)
+	if (CombatTarget)
 	{
-		CombatTargetLocation = CombatTargetForHealthbar->GetActorLocation();
+		CombatTargetLocation = CombatTarget->GetActorLocation();
 		if (MainPlayerController) {
 			MainPlayerController->EnemyLocation = CombatTargetLocation;
 		}
@@ -210,7 +246,8 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAxis("TurnRate", this, &AMainCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AMainCharacter::LookUpRate);
 
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	//PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMainCharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	//PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMainCharacter::PressedJump);
 	//PlayerInputComponent->BindAction("Jump", IE_Released, this, &AMainCharacter::ReleaseJump);
@@ -229,7 +266,8 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void AMainCharacter::MoveForward(float value)
 {
-	if (Controller && value != 0.f&& !bAttacking)
+	bMovingForward = false;
+	if (Controller && value != 0.f&& !bAttacking && Alive())
 	{
 		//Find out which way is forward
 		const FRotator rotation = Controller->GetControlRotation();
@@ -237,12 +275,14 @@ void AMainCharacter::MoveForward(float value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
 		AddMovementInput(Direction, value);
+		bMovingForward = true;
 	}
 }
 
 void AMainCharacter::MoveRight(float value)
 {
-	if (Controller && value != 0.f&& !bAttacking)
+	bMovingRight = false;
+	if (Controller && value != 0.f&& !bAttacking && Alive())
 	{
 		//Find out which way is forward
 		const FRotator rotation = Controller->GetControlRotation();
@@ -250,6 +290,7 @@ void AMainCharacter::MoveRight(float value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 		AddMovementInput(Direction, value);
+		bMovingRight = true;
 	}
 }
 
@@ -275,7 +316,7 @@ void AMainCharacter::ReleaseJump()
 
 void AMainCharacter::LMBDown()
 {
-	if (!bAttacking)
+	if (!bAttacking && Alive())
 	{
 		bLMBDown = true;
 		if (ActiveOverlappingItem) {
@@ -328,7 +369,7 @@ void AMainCharacter::SetEquipped(AItem* WeaponToSet)
 
 void AMainCharacter::Attack()
 {
-	if (!bAttacking)
+	if (!bAttacking && Alive())
 	{
 		bAttacking = true;
 		SetInterpToEnemy(true);
@@ -359,8 +400,6 @@ void AMainCharacter::Attack()
 	}
 
 	
-
-	
 }
 
 void AMainCharacter::AttackEnd()
@@ -381,6 +420,60 @@ void AMainCharacter::PlaySwingSound()
 			UGameplayStatics::PlaySound2D(this, attackWeapon->SwingSound);
 		}
 	}
+}
+
+void AMainCharacter::DeathEnd()
+{
+	GetMesh()->bPauseAnims = true;
+	//GetMesh()->bNoSkeletonUpdate = true;
+}
+
+bool AMainCharacter::Alive()
+{
+	return MovementStatus != EMovementStatus::EMS_Dead;
+}
+
+void AMainCharacter::UpdateCombatTarget()
+{
+	TArray<AActor*> OverlappingActors;
+	GetOverlappingActors(OverlappingActors, EnemyFilter);
+
+	if (OverlappingActors.Num() == 0)
+	{
+		if (MainPlayerController)
+		{
+			MainPlayerController->RemoveEnemyHealthBar();
+		}
+		return;
+	}
+
+	AEnemy* ClosestEnemy = Cast<AEnemy>(OverlappingActors[0]);
+	if (ClosestEnemy)
+	{
+		FVector Location = GetActorLocation();
+		float MinDistance = (ClosestEnemy->GetActorLocation() - Location).Size();
+
+		for (auto Actor : OverlappingActors)
+		{
+			AEnemy* Enemy = Cast<AEnemy>(Actor);
+			if (Enemy)
+			{
+				float DistanceToActor = (Enemy->GetActorLocation() - Location).Size();
+				if (DistanceToActor < MinDistance)
+				{
+					MinDistance = DistanceToActor;
+					ClosestEnemy = Enemy;
+				}
+			}
+		}
+		if (MainPlayerController)
+		{
+			MainPlayerController->DisplayEnemyHealthBar();
+		}
+		SetCombatTarget(ClosestEnemy);
+		bHasCombatTarget = true;
+	}
+
 }
 
 void AMainCharacter::ShiftKeyDown()
@@ -408,7 +501,10 @@ void AMainCharacter::Stamina_Normal(float DeltaStamina)
 			Stamina -= DeltaStamina;
 		}
 
-		SetMovementStatus(EMovementStatus::EMS_Sprinting);
+		if(IsMoving())
+			SetMovementStatus(EMovementStatus::EMS_Sprinting);
+		else
+			SetMovementStatus(EMovementStatus::EMS_Normal);
 	}
 
 	//shift key up
@@ -441,7 +537,10 @@ void AMainCharacter::Stamina_BelowMinimum(float DeltaStamina)
 		else
 		{
 			Stamina -= DeltaStamina;
-			SetMovementStatus(EMovementStatus::EMS_Sprinting);
+			if(IsMoving())
+				SetMovementStatus(EMovementStatus::EMS_Sprinting);
+			else
+				SetMovementStatus(EMovementStatus::EMS_Normal);
 		}
 	}
 	else
