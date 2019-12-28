@@ -28,6 +28,9 @@ class DUNGEON_SIEGE_API AAttackWeapon : public AItem
 public:
 	AAttackWeapon();
 
+	UPROPERTY(EditDefaultsOnly, Category = "SaveData")
+	FString Name;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Particles")
 	bool bWeaponParticle;
 

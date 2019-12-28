@@ -60,6 +60,7 @@ void ADefenseWeapon::Equip(AMainCharacter* character)
 	//SkeletalMesh->SetSimulatePhysics(false);
 
 	const USkeletalMeshSocket* LeftHandSocket = character->GetMesh()->GetSocketByName("Shield_hold");
+	const USkeletalMeshSocket* ShieldSocket = character->GetMesh()->GetSocketByName("Shield_back");
 	if (LeftHandSocket) {
 		LeftHandSocket->AttachActor(this, character->GetMesh());
 		bRotate = false;

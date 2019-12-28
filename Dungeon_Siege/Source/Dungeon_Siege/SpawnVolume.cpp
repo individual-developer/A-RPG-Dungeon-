@@ -6,6 +6,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "engine/World.h"
 #include "Critter.h"
+#include "Enemy.h"
+#include "AIController.h"
 
 // Sets default values
 ASpawnVolume::ASpawnVolume()
@@ -20,6 +22,12 @@ ASpawnVolume::ASpawnVolume()
 void ASpawnVolume::BeginPlay()
 {
 	Super::BeginPlay();
+	if (ActorToSpawn_1 && ActorToSpawn_2 && ActorToSpawn_3 && ActorToSpawn_4) {
+		SpawnArray.Add(ActorToSpawn_1);
+		SpawnArray.Add(ActorToSpawn_2);
+		SpawnArray.Add(ActorToSpawn_3);
+		SpawnArray.Add(ActorToSpawn_4);
+	}
 	
 }
 
@@ -38,14 +46,31 @@ FVector ASpawnVolume::GetSpawnPoint()
 	return Point;
 }
 
-void ASpawnVolume::SpawnPawn_Implementation(UClass* ToSpawn, const FVector& Location)
+TSubclassOf<AActor> ASpawnVolume::GetSpawnActor()
+{
+	if (SpawnArray.Num() > 0) {
+		int32 Selection = FMath::RandRange(0, SpawnArray.Num() - 1);
+		return SpawnArray[Selection];
+	}
+	return nullptr;
+}
+
+void ASpawnVolume::SpawnActors_Implementation(UClass* ToSpawn, const FVector& Location)
 {
 	if (ToSpawn) {
 		UWorld* World = GetWorld();
 		FActorSpawnParameters SpawnParams;
 		if (World)
 		{
-			ACritter* CritterSpawned = Cast<ACritter>(World->SpawnActor<APawn>(ToSpawn, Location, FRotator(0.f), SpawnParams));
+			AActor* actor = World->SpawnActor<AActor>(ToSpawn, Location, FRotator(0.f), SpawnParams);
+			if (AEnemy* enemy = Cast<AEnemy>(actor)) {
+				enemy->SpawnDefaultController();
+				AAIController* AI = Cast<AAIController>(enemy->GetController());
+				if (AI) {
+					enemy->AIController = AI;
+				}
+			}
+			//ACritter* CritterSpawned = Cast<ACritter>(World->SpawnActor<APawn>(ToSpawn, Location, FRotator(0.f), SpawnParams));
 			//ACritter* CritterSpawned = reinterpret_cast<ACritter*>(World->SpawnActor<APawn>(ToSpawn, Location, FRotator(0.f), SpawnParams));
 		}
 	}

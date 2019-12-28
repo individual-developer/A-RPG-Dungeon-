@@ -23,6 +23,24 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	UUserWidget* HUDOverlay;
 
+	UFUNCTION(BlueprintCallable)
+	void RemoveHUD();
+
+	UFUNCTION(BlueprintCallable)
+	void DisplayHUD();
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveLoading();
+
+	UFUNCTION(BlueprintCallable)
+	void DisplayLoading();
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveLevelTransition();
+
+	UFUNCTION(BlueprintCallable)
+	void DisplayLevelTransition();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	TSubclassOf<class UUserWidget> WEnemyHealthBar;
 
@@ -32,10 +50,39 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
 	bool EnemyHealthBarVisibility;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<class UUserWidget> WPauseMenu;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UUserWidget* PauseMenu;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<class UUserWidget> WLevelTransition;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UUserWidget* LevelTransition;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<class UUserWidget> WLoading;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UUserWidget* Loading;
+
 	void DisplayEnemyHealthBar();
 	void RemoveEnemyHealthBar();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
+	bool PauseMenuVisibility;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category=HUD)
+	void DisplayPauseMenu();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HUD)
+	void RemovePauseMenu();
+
 	FVector EnemyLocation;
+	void TogglePauseMenu();
 
 protected:
 	virtual void BeginPlay() override;

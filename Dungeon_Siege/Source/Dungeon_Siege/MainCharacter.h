@@ -34,6 +34,9 @@ public:
 	// Sets default values for this character's properties
 	AMainCharacter();
 
+	UPROPERTY(EditDefaultsOnly, Category = "SaveData")
+	TSubclassOf<class AItemStorge> WeaponStorage;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool bHasCombatTarget;
 
@@ -170,6 +173,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// Check if character movement is allowed
+	bool CanMove(float value);
+
 	// Called to bind functionality to input
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -181,6 +187,10 @@ public:
 	void MoveRight(float value);
 	bool bMovingForward;
 	bool bMovingRight;
+
+	void Turn(float value);
+
+	void LookUp(float value);
 
 	//Check whether character is moving before sprinting 
 	FORCEINLINE bool IsMoving() { return bMovingForward || bMovingRight; }
@@ -200,6 +210,12 @@ public:
 	void LMBDown();
 
 	void LMBUp();
+
+	bool bESCDown;
+
+	void ESCDown();
+
+	void ESCUp();
 
 	FORCEINLINE USpringArmComponent* GetCameraArm() const { return CameraArm; }
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
@@ -234,5 +250,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TSubclassOf<AEnemy>EnemyFilter;
+
+	void SwitchLevel(FName LevelName);
+
+	UFUNCTION(BlueprintCallable)
+	void SaveGame();
+
+	UFUNCTION(BlueprintCallable)
+	void LoadGame(bool SetPosition);
 
 };

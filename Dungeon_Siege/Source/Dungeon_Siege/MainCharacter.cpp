@@ -21,7 +21,8 @@
 #include "Sound/SoundCue.h"
 #include "MainPlayerController.h"
 #include "AIController.h"
-
+#include "ItemStorge.h"
+#include "DungeonSaveGame.h"
 
 // Sets default values
 AMainCharacter::AMainCharacter()
@@ -81,13 +82,18 @@ AMainCharacter::AMainCharacter()
 
 	InterpSpeed = 15.f;
 	bInterpToEnemy = false;
+	bESCDown = false;
 	bHasCombatTarget = false;
 	bMovingForward = false;
 	bMovingRight = false;
+	RightEquippedWeapon = nullptr;
+	LeftEquippedWeapon = nullptr;
+	EquippedWeapon = nullptr;
 }
 
 void AMainCharacter::Jump()
 {
+	if (MainPlayerController)if (MainPlayerController->PauseMenuVisibility)return;
 	if (Alive()) {
 		Super::Jump();
 	}
@@ -241,8 +247,12 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMainCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMainCharacter::MoveRight);
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	//PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	//PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+
+	PlayerInputComponent->BindAxis("Turn", this, &AMainCharacter::Turn);
+	PlayerInputComponent->BindAxis("LookUp", this, &AMainCharacter::LookUp);
+
 	PlayerInputComponent->BindAxis("TurnRate", this, &AMainCharacter::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AMainCharacter::LookUpRate);
 
@@ -258,16 +268,38 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAction("MMB", IE_Pressed, this, &AMainCharacter::LMBDown);
 	PlayerInputComponent->BindAction("MMB", IE_Released, this, &AMainCharacter::LMBUp);
 
+	PlayerInputComponent->BindAction("ESC", IE_Pressed, this, &AMainCharacter::ESCDown);
+	PlayerInputComponent->BindAction("ESC", IE_Released, this, &AMainCharacter::ESCUp);
+
 
 	//PlayerInputComponent->BindAction("SwordSwing", IE_Pressed, this, &ACharacter);
 
 
 }
 
+bool AMainCharacter::CanMove(float value) {
+	if (MainPlayerController) {
+		return value != 0.f && !bAttacking && Alive() && !MainPlayerController->PauseMenuVisibility;
+	}
+	
+	return false;
+}
+
+void AMainCharacter::LookUp(float value) {
+	if (CanMove(value))
+		AddControllerPitchInput(value);
+}
+
+void AMainCharacter::Turn(float value) {
+	if (CanMove(value))
+		AddControllerYawInput(value);
+}
+
 void AMainCharacter::MoveForward(float value)
 {
 	bMovingForward = false;
-	if (Controller && value != 0.f&& !bAttacking && Alive())
+	//if (Controller && value != 0.f&& !bAttacking && Alive())
+	if(CanMove(value))
 	{
 		//Find out which way is forward
 		const FRotator rotation = Controller->GetControlRotation();
@@ -282,7 +314,8 @@ void AMainCharacter::MoveForward(float value)
 void AMainCharacter::MoveRight(float value)
 {
 	bMovingRight = false;
-	if (Controller && value != 0.f&& !bAttacking && Alive())
+	//if (Controller && value != 0.f&& !bAttacking && Alive())
+	if(CanMove(value))
 	{
 		//Find out which way is forward
 		const FRotator rotation = Controller->GetControlRotation();
@@ -316,43 +349,62 @@ void AMainCharacter::ReleaseJump()
 
 void AMainCharacter::LMBDown()
 {
-	if (!bAttacking && Alive())
+
+	bLMBDown = true;
+
+	if (!Alive()) return;
+
+	if (MainPlayerController)if (MainPlayerController->PauseMenuVisibility)return;
+	//if (!bAttacking && Alive())
+	//{
+		
+	if (ActiveOverlappingItem) {
+
+		AAttackWeapon* AttackWeapon = Cast<AAttackWeapon>(ActiveOverlappingItem);
+		ADefenseWeapon* DefenseWeapon = Cast<ADefenseWeapon>(ActiveOverlappingItem);
+
+		if (AttackWeapon) {
+			//FString name = weapon->GetName();
+			//UE_LOG(LogTemp, Warning, TEXT("You pick up %s"), *name);
+			//if (name == "Shield_BP") {
+			AttackWeapon->Equip(this);
+			SetActiveOverlappingItem(nullptr);
+		}
+
+		else if (DefenseWeapon) {
+			DefenseWeapon->Equip(this);
+			SetActiveOverlappingItem(nullptr);
+		}
+
+		}
+
+	else if (RightEquippedWeapon)
 	{
-		bLMBDown = true;
-		if (ActiveOverlappingItem) {
+		UE_LOG(LogTemp, Warning, TEXT("weapon is equipped"));
+		Attack();
+		//SetActiveOverlappingItem(nullptr);
 
-			AAttackWeapon* AttackWeapon = Cast<AAttackWeapon>(ActiveOverlappingItem);
-			ADefenseWeapon* DefenseWeapon = Cast<ADefenseWeapon>(ActiveOverlappingItem);
-
-			if (AttackWeapon) {
-				//FString name = weapon->GetName();
-				//UE_LOG(LogTemp, Warning, TEXT("You pick up %s"), *name);
-				//if (name == "Shield_BP") {
-				AttackWeapon->Equip(this);
-				SetActiveOverlappingItem(nullptr);
-			}
-
-			else if (DefenseWeapon) {
-				DefenseWeapon->Equip(this);
-				SetActiveOverlappingItem(nullptr);
-			}
-
-		}
-
-		else if (RightEquippedWeapon)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("weapon is equipped"));
-			Attack();
-			//SetActiveOverlappingItem(nullptr);
-
-		}
 	}
+	
 }
 
 void AMainCharacter::LMBUp()
 {
 	bLMBDown = false;
 
+}
+
+void AMainCharacter::ESCDown()
+{
+	bESCDown = true;
+	if (MainPlayerController) {
+		MainPlayerController->TogglePauseMenu();
+	}
+}
+
+void AMainCharacter::ESCUp()
+{
+	bESCDown = false;
 }
 
 void AMainCharacter::SetEquipped(AItem* WeaponToSet)
@@ -474,6 +526,83 @@ void AMainCharacter::UpdateCombatTarget()
 		bHasCombatTarget = true;
 	}
 
+}
+
+void AMainCharacter::SwitchLevel(FName LevelName)
+{
+	UWorld* world = GetWorld();
+	if (world) {
+		FString CurrentLevel = world->GetMapName();
+		if (CurrentLevel != LevelName.ToString())
+		{
+			UGameplayStatics::OpenLevel(world, LevelName);
+		}
+	}
+}
+
+void AMainCharacter::SaveGame()
+{
+	UDungeonSaveGame* SaveGameInstance = Cast<UDungeonSaveGame>(UGameplayStatics::CreateSaveGameObject(UDungeonSaveGame::StaticClass()));
+	SaveGameInstance->PlayerStats.Health = Health;
+	SaveGameInstance->PlayerStats.MAXHealth = MaxHealth;
+	SaveGameInstance->PlayerStats.Stamina = Stamina;
+	SaveGameInstance->PlayerStats.MAXStamina = MaxStamina;
+	SaveGameInstance->PlayerStats.Coins = Coins;
+
+	if (LeftEquippedWeapon) {
+		ADefenseWeapon* defenseWeapon = Cast<ADefenseWeapon>(LeftEquippedWeapon);
+		SaveGameInstance->PlayerStats.LeftWeaponName = defenseWeapon->Name;
+	}
+	if (RightEquippedWeapon) {
+		AAttackWeapon* attackWeapon = Cast<AAttackWeapon>(RightEquippedWeapon);
+		SaveGameInstance->PlayerStats.RightWeaponName = attackWeapon->Name;
+	}
+
+	SaveGameInstance->PlayerStats.Locaion = GetActorLocation();
+	SaveGameInstance->PlayerStats.Rotation = GetActorRotation();
+	UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->PlayerName, SaveGameInstance->UserIndex);
+}
+
+void AMainCharacter::LoadGame(bool SetPosition)
+{
+	UDungeonSaveGame* LoadGameInstance = Cast<UDungeonSaveGame>(UGameplayStatics::CreateSaveGameObject(UDungeonSaveGame::StaticClass()));
+
+	LoadGameInstance = Cast<UDungeonSaveGame>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->PlayerName, LoadGameInstance->UserIndex));
+	Health = LoadGameInstance->PlayerStats.Health;
+	MaxHealth = LoadGameInstance->PlayerStats.MAXHealth;
+	Stamina = LoadGameInstance->PlayerStats.Stamina;
+	MaxStamina = LoadGameInstance->PlayerStats.MAXStamina;
+	Coins = LoadGameInstance->PlayerStats.Coins;
+
+	if (WeaponStorage)
+	{
+		AItemStorge* Weapons = GetWorld()->SpawnActor<AItemStorge>(WeaponStorage);
+		if (Weapons) {
+			FString LeftWeaponName = LoadGameInstance->PlayerStats.LeftWeaponName;
+			FString RightWeaponName = LoadGameInstance->PlayerStats.RightWeaponName;
+			//if (RightWeaponName!=TEXT("") && Weapons->AttackWeaponMap[RightWeaponName]) {
+			if (Weapons->AttackWeaponMap[RightWeaponName]) 
+			{
+				AAttackWeapon* AttackWeaponsToEquip = GetWorld()->SpawnActor<AAttackWeapon>(Weapons->AttackWeaponMap[RightWeaponName]);
+				if (AttackWeaponsToEquip)
+					AttackWeaponsToEquip->Equip(this);
+			}
+			//if (LeftWeaponName!=TEXT("") && Weapons->DefenseWeaponMap[LeftWeaponName]) {
+			if (Weapons->DefenseWeaponMap[LeftWeaponName])
+			{
+				ADefenseWeapon* DefenseWeaponsToEquip = GetWorld()->SpawnActor<ADefenseWeapon>(Weapons->DefenseWeaponMap[LeftWeaponName]);
+
+				if (DefenseWeaponsToEquip)
+					DefenseWeaponsToEquip->Equip(this);
+			}
+		}
+	}
+
+	if (SetPosition)
+	{
+		SetActorLocation(LoadGameInstance->PlayerStats.Locaion);
+		SetActorRotation(LoadGameInstance->PlayerStats.Rotation);
+	}
 }
 
 void AMainCharacter::ShiftKeyDown()

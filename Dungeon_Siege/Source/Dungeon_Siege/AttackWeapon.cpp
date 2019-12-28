@@ -105,17 +105,31 @@ void AAttackWeapon::Equip(AMainCharacter* character)
 	if (character)
 	{
 		SetInstigator(character->GetController());
-		StaticMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-		StaticMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-		StaticMesh->SetSimulatePhysics(false);
-		//SkeletalMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-		//SkeletalMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-		//SkeletalMesh->SetSimulatePhysics(false);
+		if (StaticMesh)
+		{
+			StaticMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+			StaticMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+			StaticMesh->SetSimulatePhysics(false);
+		}
+		if (SkeletalMesh)
+		{
+			SkeletalMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+			SkeletalMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+			SkeletalMesh->SetSimulatePhysics(false);
+		}
+		
 
 
-		const USkeletalMeshSocket* RightHandSocket = character->GetMesh()->GetSocketByName("Sword_hold");
-		if (RightHandSocket) {
-			RightHandSocket->AttachActor(this, character->GetMesh());
+		const USkeletalMeshSocket* RightHandSkeletalSocket = character->GetMesh()->GetSocketByName("Sword_hold");
+		const USkeletalMeshSocket* RightHandStaticSocket = character->GetMesh()->GetSocketByName("Sword_hold1");
+		if (RightHandSkeletalSocket&&this->ActorHasTag(FName("Skeletal"))) {
+			RightHandSkeletalSocket->AttachActor(this, character->GetMesh());
+			bRotate = false;
+			character->SetEquipped(this);
+			character->SetActiveOverlappingItem(nullptr);
+		}
+		else if (RightHandStaticSocket && this->ActorHasTag(FName("Static"))) {
+			RightHandStaticSocket->AttachActor(this, character->GetMesh());
 			bRotate = false;
 			character->SetEquipped(this);
 			character->SetActiveOverlappingItem(nullptr);

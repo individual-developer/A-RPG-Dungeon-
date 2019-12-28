@@ -35,9 +35,17 @@ public:
 	FVector InitialSwitchLocation;
 
 	FTimerHandle SwitchHandle;
+	FTimerHandle dooropendelay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Switch")
 	float SwitchTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Floor Switch")
+	float delayTime;
+
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Floor Switch")
+	//class ULevelSequencePlayer* player;
 
 	bool bCharacterOnSwitch;
 

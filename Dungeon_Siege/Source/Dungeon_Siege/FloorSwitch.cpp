@@ -5,6 +5,8 @@
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "TimerManager.h"
+#include "Camera/CameraComponent.h"
+
 
 
 
@@ -33,6 +35,8 @@ AFloorSwitch::AFloorSwitch()
 
 	bCharacterOnSwitch = false;
 	SwitchTime = 2.f;
+	delayTime = 0.5;
+	//player = ULevelSequencePlayer
 }
 
 // Called when the game starts or when spawned
@@ -43,6 +47,7 @@ void AFloorSwitch::BeginPlay()
 	TriggerBox->OnComponentEndOverlap.AddDynamic(this, &AFloorSwitch::EndOverlap);
 	InitialDoorLocation = Door->GetComponentLocation();
 	InitialSwitchLocation = FloorSwitch->GetComponentLocation();
+	
 }
 
 // Called every frame
@@ -76,8 +81,10 @@ void AFloorSwitch::BeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 	UE_LOG(LogTemp, Warning, TEXT("Overlap Begin!"));
 	if(!bCharacterOnSwitch)
 		bCharacterOnSwitch = true;
-	RaiseDoor();
 	LowerSwitch();
+	GetWorldTimerManager().SetTimer(dooropendelay, this, &AFloorSwitch::RaiseDoor, delayTime);
+	//RaiseDoor();
+	//LowerSwitch();
 }
 
 void AFloorSwitch::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
